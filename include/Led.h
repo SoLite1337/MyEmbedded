@@ -4,11 +4,11 @@
 class Led
 {
 private:
-    u8_t  pin          = 0;
-    bool  state        = false;
-    bool  blinkMode    = false;
+    u8_t  pin           = 0;
+    bool  state         = false;
+    bool  blinkMode     = false;
     u32_t blinkInterval = 100;
-    u32_t lastToggle   = 0;
+    u32_t lastToggle    = 0;
 
 public:
     void init(u8_t p);

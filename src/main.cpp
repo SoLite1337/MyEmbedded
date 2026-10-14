@@ -6,15 +6,14 @@
 
 //Объекты
 Button btnArm;      // кнопка Arm
-Button btnReset;    // кнопка Ack
+Button btnReset;    // кнопка Acknowledge
 Ldr    ldr;
 Led    ledGreen;
 Led    ledRed;
 
 enum SystemState { MASKED, ARMED, ALARM };
 SystemState currentState = MASKED;
-SystemState lastState    = (SystemState)-1;  //исп. знач. -1 = ка "не задано", чтобы применить выходы на старте
-
+SystemState lastState    = (SystemState)-1;  //исп. знач. -1 = как "не задано", чтобы применить выходы на старте
 u32_t alarmStartTime = 0;
 
 void setup()
@@ -39,7 +38,7 @@ void loop()
     ledGreen.poll();
     ledRed.poll();
 
-    //Логика переходов
+    //Логика для переходов
     switch (currentState)
     {
       case MASKED:

@@ -14,6 +14,6 @@ public:
     void  init(u8_t p);
     void  poll();
     bool  get_state();
-    bool  wasPressed();           // true один раз при фронте нажатия
+    bool  wasPressed();           // true при фронте нажатия
     u32_t getPressTime();
 };
