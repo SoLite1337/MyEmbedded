@@ -4,17 +4,23 @@
 #include "Ldr.h"
 #include "Led.h"
 
-//Объекты
-Button btnArm;      // кнопка Arm
-Button btnReset;    // кнопка Acknowledge
+Button btnArm;
+Button btnReset;
 Ldr    ldr;
 Led    ledGreen;
 Led    ledRed;
 
-enum SystemState { MASKED, ARMED, ALARM };
-SystemState currentState = MASKED;
-SystemState lastState    = (SystemState)-1;  //исп. знач. -1 = как "не задано", чтобы применить выходы на старте
+enum SystemState {
+    MASKED = 0,
+    INIT   = 1,
+    ARMED  = 2,
+    ALARM  = 3
+};
+
+SystemState currentState = INIT;
+SystemState lastState    = (SystemState)-1;
 u32_t alarmStartTime = 0;
+u32_t initStartTime  = 0;
 
 void setup()
 {
@@ -26,26 +32,35 @@ void setup()
     ledGreen.init(LED_GREEN);
     ledRed.init(LED_RED);
     Serial.println("=== Laser Detection System ===");
-    Serial.println("Initial state: MASKED");
+    Serial.println("Initial state: INIT");
+    initStartTime = millis();
 }
 
 void loop()
 {
-    //Опрос входов
+    // Опрос входов
     ldr.poll();
     btnArm.poll();
     btnReset.poll();
     ledGreen.poll();
     ledRed.poll();
 
-    //Логика для переходов
     switch (currentState)
     {
+      case INIT:
+        btnArm.wasPressed();
+        btnReset.wasPressed();
+        if (millis() - initStartTime >= INIT_PERIOD_MS)
+        {
+            currentState = MASKED;
+        }
+        break;
+
       case MASKED:
         if (btnArm.wasPressed())
-          {
+        {
             currentState = ARMED;
-          }
+        }
         break;
 
       case ARMED:
@@ -61,8 +76,7 @@ void loop()
         break;
 
       case ALARM:
-        //Тревога. Выход только по ACK.
-        //Ни btnArm, ни LDR на состояние не влияют.
+        btnArm.wasPressed();
         if (btnReset.wasPressed())
         {
             u32_t latency = millis() - btnReset.getPressTime();
@@ -72,11 +86,17 @@ void loop()
         break;
     }
 
-    //Отработка выходов при смене состояния
+    // Отработка выходов при смене состояния
     if (currentState != lastState)
     {
         switch (currentState)
         {
+        case INIT:
+            ledGreen.blink(500);   // не быстрое мигання = инициализация
+            ledRed.off();
+            Serial.println("State: INIT");
+            break;
+
         case MASKED:
             ledGreen.set(false);
             ledRed.set(false);

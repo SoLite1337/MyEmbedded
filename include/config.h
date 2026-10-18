@@ -12,8 +12,10 @@
 #define BTN_PERIOD_MS   20
 
 //Пороги
-#define LDR_THRESHOLD    3750   // всё, что выше — считаем лазером
+#define LDR_THRESHOLD    3750   // всё, что выше - считаем лазером
 #define BLINK_PERIOD_MS  100    // период мигания красного LED
+#define INIT_PERIOD_MS  2000
 
 //Фильтр
 #define LDR_FILTER_N  10        // было 32, уменьшил для быстрой реакции
+
