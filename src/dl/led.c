@@ -1,19 +1,14 @@
-#include "led.h"
-#include "config.h"
+#include "dl/led.h"
+#include "dl/config.h"
 
+// ==================================================================
+// Реализация управления светодиодами.
+// ==================================================================
 
-// НАЗНАЧЕНИЕ:
-//   Драйвер светодиода:
-//     - постоянное включение (led_on);
-//     - постоянное выключения (led_off);
-//     - серии миганий (led_blink) с указанием количества вспышек, времени ON и времени OFF.
-//     - Реализован как FSM с состояниями led_state_t.
-
-
-//Инициализация структуры
+// Инициализация светодиода, назначение пина и активного уровня
 void led_init(led_t *l, GPIO_TypeDef *port, uint16_t pin, uint8_t active_low)
 {
-    (void)active_low;   /* наши LED active-high — параметр для переноса */
+    (void)active_low;   /* наші LED active-high */
     l->port        = port;
     l->pin         = pin;
     l->state       = LED_ST_OFF;
@@ -25,7 +20,7 @@ void led_init(led_t *l, GPIO_TypeDef *port, uint16_t pin, uint8_t active_low)
     config_led_write(port, pin, 0);
 }
 
-// Включить светодиод и сбросить все параметры мигания
+// Включение светодиода
 void led_on(led_t *l)
 {
     l->state       = LED_ST_ON;
@@ -34,7 +29,7 @@ void led_on(led_t *l)
     config_led_write(l->port, l->pin, 1);
 }
 
-// Выключить светодиод и сбросить все параметры мигания
+// Выключение светодиода
 void led_off(led_t *l)
 {
     l->state       = LED_ST_OFF;
@@ -43,7 +38,7 @@ void led_off(led_t *l)
     config_led_write(l->port, l->pin, 0);
 }
 
-// Запустить серию миганий. count=LED_BLINK_FOREVER
+// Моргание светодиодом: count раз, on_ms миллисекунд включен, off_ms миллисекунд выключен
 void led_blink(led_t *l, uint32_t count, uint32_t on_ms, uint32_t off_ms)
 {
     l->on_ms       = on_ms;
@@ -55,30 +50,28 @@ void led_blink(led_t *l, uint32_t count, uint32_t on_ms, uint32_t off_ms)
     config_led_write(l->port, l->pin, 1);
 }
 
+// Тик таймера для светодиода, должен вызываться каждые 1 мс
 void led_tick(led_t *l)
 {
     switch (l->state) 
     {
         case LED_ST_OFF:
-            break;   /* статика - ничего не делаем */
 
+            break;   /* статика — нічого не робимо */
         case LED_ST_ON:
-            break;   /* статика - ничего не делаем */
+            break;   /* статика — нічого не робимо */
 
         case LED_ST_BLINK_ON:
-            // Фаза  мигания. Ждём окончания таймера.
             if (l->timer > 0) 
             {
                 l->timer--;
             }
-            // Если таймер закончился, то выключаем светодиод и переходим в фазу паузы.
             if (l->timer == 0) 
             {
                 config_led_write(l->port, l->pin, 0);
                 l->state = LED_ST_BLINK_OFF;
                 l->timer = l->off_ms;
                 if (!l->infinite) 
-                // Если мигание не бесконечное, то уменьшаем счётчик вспышек.
                 {
                     if (l->blinks_left > 0) 
                     {
@@ -93,14 +86,12 @@ void led_tick(led_t *l)
             break;
 
         case LED_ST_BLINK_OFF:
-            // Фаза паузы. Ждём окончания таймера.
             if (l->timer > 0) 
             {
                 l->timer--;
             }
             if (l->timer == 0) 
             {
-                // Пауза закончилась, включаем, новая вспышка.
                 config_led_write(l->port, l->pin, 1);
                 l->state = LED_ST_BLINK_ON;
                 l->timer = l->on_ms;
@@ -109,15 +100,11 @@ void led_tick(led_t *l)
     }
 }
 
-
-// Проверяем LED на мигание
 uint8_t led_is_blinking(led_t *l)
 {
     return (l->state == LED_ST_BLINK_ON || l->state == LED_ST_BLINK_OFF) ? 1u : 0u;
 }
 
-
-// Получить текущее состояние светодиода
 led_state_t led_get_state(const led_t *l)
 {
     return l->state;
